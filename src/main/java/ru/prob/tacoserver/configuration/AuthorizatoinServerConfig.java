@@ -112,3 +112,6 @@ public class AuthorizatoinServerConfig {
         };
     }
 }
+/*
+curl localhost:9000/oauth2/token -H"Content-type: application/x-www-form-urlencoded" -d"grant_type=authorization_code" -d"redirect_uri=http://127.0.0.1:9090/login/oauth2/code/taco-admin-client" -d"code=xsexctOCQOXY1isK4nygnLIikw5ZiPize9FvBPqJ4Zm9lOYnw4G_W3D0W3zcsVNmkq9MWiE8AELnCsla4cFbBvOyRNQpS-G2eDgaqr6PkOFY_gF48gbW95INeV42uXcs" -u"taco-admin-client:secret"
+*/
