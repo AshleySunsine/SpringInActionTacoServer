@@ -1,6 +1,5 @@
 package ru.prob.tacoserver.configuration;
 
-import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.jwk.source.JWKSource;
@@ -13,8 +12,6 @@ import org.springframework.core.annotation.Order;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
@@ -23,6 +20,8 @@ import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.server.authorization.client.InMemoryRegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
+import org.springframework.security.oauth2.server.authorization.config.ClientSettings;
+import org.springframework.security.oauth2.server.authorization.config.ProviderSettings;
 import org.springframework.security.web.SecurityFilterChain;
 import ru.prob.tacoserver.model.UserU;
 import ru.prob.tacoserver.repository.UserRepository;
@@ -30,6 +29,7 @@ import ru.prob.tacoserver.repository.UserRepository;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
+
 
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
@@ -66,24 +66,29 @@ public class AuthorizatoinServerConfig {
                         .scope("writeIngredients")
                         .scope("deleteIngredients")
                         .scope(OidcScopes.OPENID)
-                        .clientSettings(
-                                clientSettings -> clientSettings.requireUserConsent(true))
+                        .clientSettings(ClientSettings.builder().requireAuthorizationConsent(true).build())
                         .build();
         return new InMemoryRegisteredClientRepository(registeredClient);
     }
 
+    @Bean public ProviderSettings providerSettings() {
+        return ProviderSettings.builder().build();
+    }
+
     @Bean
-    public JWKSource<SecurityContext> jwkSource() throws NoSuchAlgorithmException {
-        RSAKey rsaKey = generateRSA();
-        JWKSet jwkSet = new JWKSet((JWK) rsaKey);
+    public JWKSource<SecurityContext> jwkSource()
+            throws NoSuchAlgorithmException {
+        RSAKey rsaKey = generateRsa();
+        JWKSet jwkSet = new JWKSet(rsaKey);
         return (jwkSelector, securityContext) -> jwkSelector.select(jwkSet);
     }
 
-    private static RSAKey generateRSA() throws NoSuchAlgorithmException {
+    private static RSAKey generateRsa() throws NoSuchAlgorithmException {
         KeyPair keyPair = generateRsaKey();
         RSAPublicKey publicKey = (RSAPublicKey) keyPair.getPublic();
         RSAPrivateKey privateKey = (RSAPrivateKey) keyPair.getPrivate();
         return new RSAKey.Builder(publicKey)
+                .privateKey(privateKey)
                 .keyID(UUID.randomUUID().toString())
                 .build();
     }
@@ -113,5 +118,5 @@ public class AuthorizatoinServerConfig {
     }
 }
 /*
-curl localhost:9000/oauth2/token -H"Content-type: application/x-www-form-urlencoded" -d"grant_type=authorization_code" -d"redirect_uri=http://127.0.0.1:9090/login/oauth2/code/taco-admin-client" -d"code=xsexctOCQOXY1isK4nygnLIikw5ZiPize9FvBPqJ4Zm9lOYnw4G_W3D0W3zcsVNmkq9MWiE8AELnCsla4cFbBvOyRNQpS-G2eDgaqr6PkOFY_gF48gbW95INeV42uXcs" -u"taco-admin-client:secret"
+curl localhost:9000/oauth2/token -H"Content-type: application/x-www-form-urlencoded" -d"grant_type=authorization_code" -d"redirect_uri=http://127.0.0.1:9090/login/oauth2/code/taco-admin-client" -d"code=u1E6WBX6vk12ndbGlEcqM68mC6bPza0cYP0phJQpWSm93EiR6M6D8dTeBdX1bSSHK8kKgccx_udCdcmyMylRFp2DENcKF9sC4tS6iynelnzQpE03praGiCmTBSXrxyym" -u taco-admin-client:secret
 */
